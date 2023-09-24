@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Url Shortener</h1>
+
+    <% if (locals.shortId ) { %>
+        <p>Url Generated: http://localhost:8000/url/<%=shortId%></p>
+    <% } %>
+<%= console.log(locals.shortId ) %>
+    <!-- Conditionally render the URL generation form for users with 'LinksCreate' permission -->
+    <% if (locals.hasCreateLinksPermission) { %>
+        <form method="post" action="/url">
+            <label>Enter your original URL</label>
+            <input type="text" name="url" id="">
+            <button type="submit">Submit</button>
+        </form>
+    <% } %>
+<%= console.log(locals.hasCreateLinksPermission) %>
+
+<% if (locals.isAdmin) { %>
+    <a href="/getallurl"> Admin</a>
+<% } %>
+
+    <table>
+        <thead>
+            <th>Sr no</th>
+            <th>ShortId</th>
+            <th>Redirect</th>
+            <th>Total Clicks</th>
+            <th>Delete</th>
+        </thead>
+        <tbody>
+            <% urls.forEach((ele,index)=> { %>
+                <tr>
+                    <td><%= index+1 %></td>
+                    <td><%= ele.shortId %></td>
+                    <td><%= ele.RedirectURL %></td>
+                    <td><%= ele.vistHistory.length %></td>
+                    <td>
+                        <!-- Create a delete button for each URL -->
+                        <% if (locals.hasLinksDeletePermission) { %>
+                            <button class="deleteButton" data-shortid="<%= ele.shortId %>">Delete</button>
+                        <% } %>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+
+    <!-- Add a logout button -->
+    <button id="logoutButton">Logout</button>
+
+    <script>
+        let deleteButtons = document.querySelectorAll(".deleteButton");
+        let logoutButton = document.querySelector("#logoutButton");
+
+        deleteButtons.forEach(button => {
+            button.addEventListener("click", async () => {
+                const shortId = button.getAttribute("data-shortid");
+                const confirmDelete = confirm("Are you sure you want to delete this URL?");
+
+                if (confirmDelete) {
+                    try {
+                        // Send a DELETE request to delete the URL
+                        const response = await fetch(`/url/analytic/${shortId}`, {
+                            method: "DELETE",
+                        });
+
+                        if (response.status === 200) {
+                            alert("URL deleted successfully.");
+                            // Reload the page to reflect the changes
+                            window.location.reload();
+                        } else {
+                            alert("Failed to delete the URL.");
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        alert("An error occurred while deleting the URL.");
+                    }
+                }
+            });
+        });
+
+        logoutButton.addEventListener("click", async () => {
+            try {
+                // Clear user data on the client-side
+                document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+                // Redirect the user to the login page (you can change the URL as needed)
+                window.location.href = "/login";
+            } catch (error) {
+                console.error(error);
+                alert("An error occurred during logout.");
+            }
+        });
+    </script>
+
+    <!-- JavaScript to clear cookies on logout button click -->
+
+</body>
+
+</html>
